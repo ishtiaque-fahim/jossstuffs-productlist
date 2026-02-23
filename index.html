@@ -204,7 +204,7 @@
 </header>
 
 <div class="admin-bar" id="adminBar">
-  <div class="admin-bar-inner">🛡️ Admin Mode active — Changes save instantly to Firebase and are visible to all visitors.</div>
+  <div class="admin-bar-inner">🛡️ Admin Mode active — Changes save instantly to Firebase and are visible to all visitors. &nbsp;|&nbsp; <span style="cursor:pointer;text-decoration:underline;opacity:0.8" onclick="seedProducts()">Seed all 36 products</span> (use only on first setup)</div>
 </div>
 
 <!-- ══ MAIN ══ -->
@@ -318,6 +318,46 @@ const HARDCODED_CONFIG = {
   appId:      '',  // e.g. '1:123:web:abc'
 };
 
+// ── REAL JOSS STUFFS PRODUCTS (used to seed Firestore on first admin login) ──
+const SEED_PRODUCTS = [
+  { id:'0011', name:'Gift Bag (Small)',                                 cat:'Gift',       emoji:'🎁', buying:70,   asking:80   },
+  { id:'0012', name:'Animal Alarm Clock',                               cat:'Clock',      emoji:'⏰', buying:400,  asking:650  },
+  { id:'0013', name:'Jewelry Box',                                      cat:'Gift',       emoji:'💍', buying:300,  asking:400  },
+  { id:'0014', name:'Premium Plush',                                    cat:'Plush',      emoji:'🧸', buying:300,  asking:500  },
+  { id:'0015', name:'Cabbage Bull Plush',                               cat:'Plush',      emoji:'🧸', buying:150,  asking:200  },
+  { id:'0016', name:'Gift Bag (Medium)',                                 cat:'Gift',       emoji:'🎁', buying:90,   asking:100  },
+  { id:'0017', name:'Gift Bag (Large)',                                  cat:'Gift',       emoji:'🎁', buying:100,  asking:120  },
+  { id:'0018', name:'Mini Plush Doll – Cake Edition',                   cat:'Plush',      emoji:'🧸', buying:150,  asking:250  },
+  { id:'0019', name:'Premium Metal Silent Alarm Clock',                 cat:'Clock',      emoji:'⏰', buying:600,  asking:1000 },
+  { id:'0020', name:'Mini Kerosene Lamp',                               cat:'Lamp',       emoji:'💡', buying:60,   asking:100  },
+  { id:'0021', name:'House Piggy Bank',                                 cat:'Bank',       emoji:'🐷', buying:170,  asking:250  },
+  { id:'0022', name:'Acrylic Lamp',                                     cat:'Lamp',       emoji:'💡', buying:450,  asking:700  },
+  { id:'0023', name:'Cute Cartoon Pen Holder',                          cat:'Stationary', emoji:'✏️', buying:280,  asking:350  },
+  { id:'0024', name:"Gradient Aesthetic 'Mini Learning' Stationery Set",cat:'Stationary', emoji:'✏️', buying:200,  asking:300  },
+  { id:'0025', name:'Stationery Gift Set – Large',                      cat:'Stationary', emoji:'✏️', buying:250,  asking:350  },
+  { id:'0026', name:'Stationery Gift Set – Small',                      cat:'Stationary', emoji:'✏️', buying:100,  asking:200  },
+  { id:'0027', name:'Pencil Ruler Five-Piece Set',                      cat:'Stationary', emoji:'✏️', buying:60,   asking:80   },
+  { id:'0028', name:'Baby Care and Grooming Kits',                      cat:'Gift',       emoji:'🎁', buying:450,  asking:650  },
+  { id:'0029', name:'Mini Bouquet',                                     cat:'Gift',       emoji:'💐', buying:150,  asking:200  },
+  { id:'0030', name:'Bear Wish Cup Set',                                cat:'Gift',       emoji:'🎁', buying:500,  asking:700  },
+  { id:'0031', name:'Duck Pen Holder',                                  cat:'Stationary', emoji:'✏️', buying:250,  asking:300  },
+  { id:'0032', name:'Rabbit Mobile Phone Stand',                        cat:'Stationary', emoji:'✏️', buying:120,  asking:170  },
+  { id:'0033', name:'Tic-Tac-Toe Electronic Toy',                       cat:'Toy',        emoji:'🎮', buying:1000, asking:1550 },
+  { id:'0034', name:'Creative Vintage Bluetooth Speaker',               cat:'Speaker',    emoji:'🔊', buying:1050, asking:1500 },
+  { id:'0035', name:'Painting Night Light',                             cat:'Lamp',       emoji:'💡', buying:550,  asking:750  },
+  { id:'0036', name:'Tulip Flower Night Light',                         cat:'Lamp',       emoji:'💡', buying:650,  asking:990  },
+  { id:'0037', name:'Mini Flower Shaped Night Light',                   cat:'Lamp',       emoji:'💡', buying:300,  asking:400  },
+  { id:'0038', name:'Aesthetic Retro Desk Speaker',                     cat:'Speaker',    emoji:'🔊', buying:2200, asking:3000 },
+  { id:'0039', name:'Dynamic Water Lamp',                               cat:'Lamp',       emoji:'💡', buying:800,  asking:1050 },
+  { id:'0040', name:'Cat Silicone Night Light',                         cat:'Lamp',       emoji:'💡', buying:550,  asking:750  },
+  { id:'0041', name:'Cartoon Night Light – Lying down bunny',           cat:'Lamp',       emoji:'💡', buying:120,  asking:150  },
+  { id:'0042', name:'Cloud Night Light',                                cat:'Lamp',       emoji:'💡', buying:800,  asking:1050 },
+  { id:'0043', name:'Cartoon LED Desk Lamp',                            cat:'Lamp',       emoji:'💡', buying:500,  asking:650  },
+  { id:'0044', name:'Cute Toast Lamp',                                  cat:'Lamp',       emoji:'💡', buying:900,  asking:1290 },
+  { id:'0045', name:'Vintage Cordless Kerosene Lamp',                   cat:'Lamp',       emoji:'💡', buying:1200, asking:1650 },
+  { id:'0046', name:'Mini Retro Wireless Bluetooth Speaker',            cat:'Speaker',    emoji:'🔊', buying:850,  asking:1090 },
+];
+
 // ── STATE ──
 let db = null, products = [], sortKey = 'name', sortDir = 1, isAdmin = false, editingId = null;
 
@@ -340,7 +380,15 @@ function initFirestore(config) {
     db = getFirestore(app);
     document.getElementById('setup-banner').style.display = 'none';
     document.getElementById('countBar').textContent = 'Loading products…';
-    onSnapshot(collection(db, 'products'), snap => {
+    onSnapshot(collection(db, 'products'), async snap => {
+      // Auto-seed with real products on very first run (empty collection)
+      if (snap.empty && isAdmin) {
+        document.getElementById('countBar').textContent = 'Seeding products…';
+        for (const p of SEED_PRODUCTS) {
+          await addDoc(collection(db,'products'), { name:p.name, cat:p.cat, emoji:p.emoji, buying:p.buying, asking:p.asking, ref:p.id, createdAt:Date.now() });
+        }
+        return; // listener will fire again with data
+      }
       products = snap.docs.map(d => ({ fid: d.id, ...d.data() }));
       render();
     }, err => {
@@ -487,6 +535,19 @@ window.updateProduct = async () => {
 };
 
 // ── ADMIN ──
+window.seedProducts = async () => {
+  if (!db) { alert('Connect Firebase first!'); return; }
+  if (!isAdmin) { alert('Login as admin first!'); return; }
+  if (!confirm(`This will add all 36 Joss Stuffs products to Firestore.\n\nOnly do this on first setup (or if your list is empty).\n\nContinue?`)) return;
+  document.getElementById('countBar').textContent = 'Seeding 36 products…';
+  try {
+    for (const p of SEED_PRODUCTS) {
+      await addDoc(collection(db,'products'), { name:p.name, cat:p.cat, emoji:p.emoji, buying:p.buying, asking:p.asking, ref:p.id, createdAt:Date.now() });
+    }
+    toast('✅ All 36 products seeded to Firebase!');
+  } catch(e) { alert('Seed error: ' + e.message); }
+};
+
 window.toggleAdmin = () => {
   if (isAdmin) {
     isAdmin=false; document.body.classList.remove('admin-mode');
