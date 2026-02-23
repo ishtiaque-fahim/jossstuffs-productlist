@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joss Stuffs — Price List</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf8f6; --surface: #ffffff; --border: #ede8e1;
+    --text: #1c1814; --muted: #9a8f84; --accent: #c07840;
+    --accent-dark: #a0622e; --accent-light: #fdf3ea;
+    --profit: #2e7d52; --profit-bg: #eef6f2;
+    --shadow: 0 2px 20px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+
+  /* SETUP BANNER */
+  #setup-banner { background: #1a1714; color: #fff; font-size: 14px; }
+  .setup-inner { max-width: 1160px; margin: 0 auto; padding: 22px 24px; }
+  .setup-inner h2 { font-family: 'Playfair Display', serif; font-size: 19px; margin-bottom: 16px; }
+  .setup-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .step { display: flex; gap: 12px; background: rgba(255,255,255,0.06); border-radius: 10px; padding: 12px 16px; }
+  .step-num { background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+  .step-text { line-height: 1.65; }
+  .step-text strong { color: #f5c07a; }
+  .step-text a { color: #f5c07a; }
+  .step-text code { background: rgba(255,255,255,0.12); border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: 13px; color: #fde68a; }
+  .setup-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .setup-field label { display: block; font-size: 11px; color: #aaa; margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; }
+  .setup-field input { width: 100%; padding: 9px 12px; background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; transition: border-color 0.2s; }
+  .setup-field input::placeholder { color: #666; }
+  .setup-field input:focus { border-color: var(--accent); }
+  .btn-connect { padding: 11px 28px; background: var(--accent); color: white; border: none; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .btn-connect:hover { background: var(--accent-dark); }
+  .setup-note { margin-top: 14px; font-size: 12px; color: #777; line-height: 1.7; }
+
+  /* HEADER */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; box-shadow: var(--shadow); }
+  .header-inner { max-width: 1160px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .logo-wrap { display: flex; align-items: center; gap: 14px; }
+  .logo-wrap img { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; border: 1.5px solid var(--border); }
+  .logo-text h1 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-text p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .header-stats { display: flex; gap: 24px; align-items: center; }
+  .stat { text-align: center; }
+  .stat-val { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  /* ADMIN */
+  .btn-lock { background: none; border: 1.5px solid var(--border); border-radius: 9px; padding: 8px 13px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; }
+  .btn-lock:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-lock.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); font-weight: 500; }
+  .admin-bar { display: none; background: var(--accent-light); border-bottom: 1.5px solid #f0c89a; padding: 8px 0; }
+  .admin-bar.show { display: block; }
+  .admin-bar-inner { max-width: 1160px; margin: 0 auto; padding: 0 24px; font-size: 13px; color: var(--accent-dark); font-weight: 500; }
+  .admin-only { display: none !important; }
+  body.admin-mode .admin-only { display: flex !important; }
+  .btn-add { display: none !important; }
+  body.admin-mode .btn-add { display: flex !important; }
+
+  /* MAIN */
+  main { max-width: 1160px; margin: 0 auto; padding: 32px 24px; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .ctrl { padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--surface); outline: none; color: var(--text); transition: border-color 0.2s; }
+  .ctrl:focus { border-color: var(--accent); }
+  #searchInput { padding-left: 40px; width: 100%; }
+  .btn-add { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; align-items: center; gap: 6px; white-space: nowrap; transition: background 0.2s; }
+  .btn-add:hover { background: var(--accent-dark); }
+  .count-bar { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f7f3ee; border-bottom: 1.5px solid var(--border); }
+  th { padding: 13px 18px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.9px; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--text); }
+  th.sorted { color: var(--accent); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; animation: rowIn 0.3s ease both; }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fdf7f2; }
+  td { padding: 13px 18px; font-size: 14px; vertical-align: middle; }
+  .product-cell { display: flex; align-items: center; gap: 12px; }
+  .product-emoji { width: 44px; height: 44px; border-radius: 10px; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; border: 1px solid var(--border); }
+  .product-name { font-weight: 500; font-size: 14px; line-height: 1.3; }
+  .product-id { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .cat-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; background: #f0ebe4; color: var(--muted); white-space: nowrap; }
+  .price { font-variant-numeric: tabular-nums; font-weight: 500; }
+  .price.buying { color: #b84a2a; }
+  .price.asking { font-weight: 600; }
+  .margin-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .margin-high { background: var(--profit-bg); color: var(--profit); }
+  .margin-mid  { background: #fff8e6; color: #9a7020; }
+  .margin-low  { background: #fef0ee; color: #b84a2a; }
+  .actions { display: flex; gap: 6px; }
+  .btn-del, .btn-edit { background: none; border: 1.5px solid var(--border); border-radius: 7px; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); transition: all 0.15s; font-size: 13px; }
+  .btn-del:hover  { border-color: #d9534f; color: #d9534f; background: #fef5f5; }
+  .btn-edit:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .no-results { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 15px; }
+  .no-results .icon { font-size: 42px; margin-bottom: 12px; }
+  .loading-row td { text-align: center; padding: 50px; color: var(--muted); }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* MODALS */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(28,24,20,0.45); z-index: 100; align-items: center; justify-content: center; }
+  .overlay.open { display: flex; }
+  .modal { background: white; border-radius: 18px; padding: 32px; width: 440px; max-width: 95vw; box-shadow: 0 24px 64px rgba(0,0,0,0.2); animation: popIn 0.22s ease; }
+  @keyframes popIn { from { transform: translateY(16px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+  .modal h2 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 22px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .full { grid-column: 1 / -1; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+  .form-ctrl { width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .form-ctrl:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end; }
+  .btn-cancel { padding: 10px 18px; background: none; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; }
+  .btn-save { padding: 10px 24px; background: var(--accent); color: white; border: none; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+  .btn-save:hover { background: var(--accent-dark); }
+  .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* PASSWORD MODAL */
+  .pw-modal { background: white; border-radius: 16px; padding: 32px; width: 340px; max-width: 95vw; box-shadow: 0 24px 64px rgba(0,0,0,0.22); animation: popIn 0.22s ease; text-align: center; }
+  .pw-modal .lock-icon { font-size: 38px; margin-bottom: 10px; }
+  .pw-modal h2 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 5px; }
+  .pw-modal p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  .pw-input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 15px; text-align: center; letter-spacing: 3px; outline: none; transition: border-color 0.2s; margin-bottom: 10px; }
+  .pw-input:focus { border-color: var(--accent); }
+  .pw-input.shake { animation: shake 0.3s ease; border-color: #d9534f; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .pw-err { font-size: 12px; color: #d9534f; min-height: 16px; margin-bottom: 10px; }
+  .btn-pw-ok { width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 10px; transition: background 0.2s; }
+  .btn-pw-ok:hover { background: var(--accent-dark); }
+  .btn-pw-cancel { background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; padding: 4px; }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1714; color: white; padding: 11px 22px; border-radius: 30px; font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 200; transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; white-space: nowrap; }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  @media (max-width: 700px) {
+    .header-stats .stat:first-child, .header-stats .stat:nth-child(2) { display: none; }
+    th:nth-child(2), td:nth-child(2), th:nth-child(5), td:nth-child(5) { display: none; }
+    .product-emoji { width: 34px; height: 34px; font-size: 16px; }
+    .setup-fields { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP BANNER ══ -->
+<div id="setup-banner">
+  <div class="setup-inner">
+    <h2>⚙️ One-Time Firebase Setup</h2>
+    <div class="setup-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Go to <a href="https://console.firebase.google.com" target="_blank"><strong>console.firebase.google.com</strong></a> → Click <strong>"Add project"</strong> → Name it anything (e.g. <code>jossstuffs</code>) → Disable Google Analytics → Click <strong>"Create project"</strong></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Inside your project → Click the <strong>Web icon &lt;/&gt;</strong> → Register app (name it anything) → Copy the <code>firebaseConfig</code> object values shown on screen</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Go to <strong>Build → Firestore Database</strong> → Click <strong>"Create database"</strong> → Choose <strong>"Start in test mode"</strong> → Select any location → Click <strong>Enable</strong></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Paste your config values below → Click <strong>Connect</strong> → Done! This banner disappears permanently.</div>
+      </div>
+    </div>
+    <div class="setup-fields">
+      <div class="setup-field"><label>API Key</label><input id="cfg-apiKey" placeholder="AIzaSy..."></div>
+      <div class="setup-field"><label>Auth Domain</label><input id="cfg-authDomain" placeholder="your-app.firebaseapp.com"></div>
+      <div class="setup-field"><label>Project ID</label><input id="cfg-projectId" placeholder="jossstuffs"></div>
+      <div class="setup-field"><label>App ID</label><input id="cfg-appId" placeholder="1:123456789:web:abc..."></div>
+    </div>
+    <button class="btn-connect" onclick="connectFirebase()">🔌 Connect to Firebase</button>
+    <p class="setup-note">ℹ️ Your config is saved in this browser. To skip this banner on all devices, open the HTML file and paste your config values into the <code>HARDCODED_CONFIG</code> object near the bottom of the file, then re-upload to GitHub.</p>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <img src="https://www.easykoro.com/shops/fit-in/400x400/13046300374560323.png" alt="Joss Stuffs" onerror="this.style.display='none'">
+      <div class="logo-text">
+        <h1>Joss Stuffs</h1>
+        <p>Product Price List &nbsp;·&nbsp; Bandarban</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat"><div class="stat-val" id="statTotal">—</div><div class="stat-label">Products</div></div>
+      <div class="stat"><div class="stat-val" id="statMargin">—</div><div class="stat-label">Avg. Margin</div></div>
+      <div class="stat"><div class="stat-val" id="statCats">—</div><div class="stat-label">Categories</div></div>
+      <button class="btn-lock" id="lockBtn" onclick="toggleAdmin()">🔒 <span id="lockLabel">Admin</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="admin-bar" id="adminBar">
+  <div class="admin-bar-inner">🛡️ Admin Mode active — Changes save instantly to Firebase and are visible to all visitors.</div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<main>
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" class="ctrl" id="searchInput" placeholder="Search products…">
+    </div>
+    <select class="ctrl" id="catFilter"><option value="">All Categories</option></select>
+    <select class="ctrl" id="sortSel">
+      <option value="name">Sort: Name</option>
+      <option value="buying">Sort: Buying ↑</option>
+      <option value="asking">Sort: Asking ↑</option>
+      <option value="margin">Sort: Margin ↑</option>
+    </select>
+    <button class="btn-add" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Add Product
+    </button>
+  </div>
+  <div class="count-bar" id="countBar">Waiting for Firebase…</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="setSort('name')"   id="th-name"   class="sorted">Product ↕</th>
+          <th onclick="setSort('cat')"    id="th-cat">Category ↕</th>
+          <th onclick="setSort('buying')" id="th-buying">Buying Price ↕</th>
+          <th onclick="setSort('asking')" id="th-asking">Asking Price ↕</th>
+          <th onclick="setSort('margin')" id="th-margin">Margin ↕</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr class="loading-row"><td colspan="6"><div class="spinner"></div>Connect Firebase to load products…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- ADD MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Add New Product</h2>
+    <div class="form-grid">
+      <div class="full"><label>Product Name *</label><input class="form-ctrl" id="f-name" placeholder="e.g. Tulip Flower Night Light"></div>
+      <div class="full"><label>Category *</label><input class="form-ctrl" id="f-cat" list="cat-list" placeholder="e.g. Dreamy Night Lights & Lamps"><datalist id="cat-list"></datalist></div>
+      <div><label>Buying Price (BDT) *</label><input class="form-ctrl" id="f-buying" type="number" placeholder="0" min="0"></div>
+      <div><label>Asking Price (BDT) *</label><input class="form-ctrl" id="f-asking" type="number" placeholder="0" min="0"></div>
+      <div class="full"><label>Emoji Icon (optional)</label><input class="form-ctrl" id="f-emoji" placeholder="🎁"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" id="btn-add-save" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="overlay" id="edit-overlay">
+  <div class="modal">
+    <h2>Edit Product</h2>
+    <div class="form-grid">
+      <div class="full"><label>Product Name *</label><input class="form-ctrl" id="e-name"></div>
+      <div class="full"><label>Category *</label><input class="form-ctrl" id="e-cat" list="cat-list"></div>
+      <div><label>Buying Price (BDT) *</label><input class="form-ctrl" id="e-buying" type="number" min="0"></div>
+      <div><label>Asking Price (BDT) *</label><input class="form-ctrl" id="e-asking" type="number" min="0"></div>
+      <div class="full"><label>Emoji Icon (optional)</label><input class="form-ctrl" id="e-emoji" placeholder="🎁"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" id="btn-edit-save" onclick="updateProduct()">Update Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="overlay" id="pw-overlay">
+  <div class="pw-modal">
+    <div class="lock-icon">🔐</div>
+    <h2>Admin Access</h2>
+    <p>Enter your password to unlock edit mode</p>
+    <input class="pw-input" id="pw-input" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') checkPassword()">
+    <div class="pw-err" id="pw-err"></div>
+    <button class="btn-pw-ok" onclick="checkPassword()">Unlock</button><br>
+    <button class="btn-pw-cancel" onclick="closePwModal()">Cancel</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ════════════════════════════════════════════════
+//  ★ CHANGE YOUR PASSWORD HERE
+// ════════════════════════════════════════════════
+const ADMIN_PASSWORD = 'joss2024';
+
+// ════════════════════════════════════════════════
+//  ★ AFTER FIREBASE SETUP: paste your config here
+//    so the banner never shows again on any device
+// ════════════════════════════════════════════════
+const HARDCODED_CONFIG = {
+  apiKey:     '',  // e.g. 'AIzaSyXXXXXX'
+  authDomain: '',  // e.g. 'jossstuffs.firebaseapp.com'
+  projectId:  '',  // e.g. 'jossstuffs'
+  appId:      '',  // e.g. '1:123:web:abc'
+};
+
+// ── STATE ──
+let db = null, products = [], sortKey = 'name', sortDir = 1, isAdmin = false, editingId = null;
+
+// ── TOAST ──
+function toast(msg, ms = 2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), ms);
+}
+
+// ── INIT ──
+function getConfig() {
+  if (HARDCODED_CONFIG.apiKey && HARDCODED_CONFIG.projectId) return HARDCODED_CONFIG;
+  try { const s = localStorage.getItem('joss-fb'); return s ? JSON.parse(s) : null; } catch { return null; }
+}
+
+function initFirestore(config) {
+  try {
+    const app = initializeApp(config);
+    db = getFirestore(app);
+    document.getElementById('setup-banner').style.display = 'none';
+    document.getElementById('countBar').textContent = 'Loading products…';
+    onSnapshot(collection(db, 'products'), snap => {
+      products = snap.docs.map(d => ({ fid: d.id, ...d.data() }));
+      render();
+    }, err => {
+      document.getElementById('countBar').textContent = '⚠️ Firestore error: ' + err.message;
+    });
+  } catch(e) {
+    alert('Firebase init error: ' + e.message + '\n\nDouble-check your config values.');
+  }
+}
+
+const cfg = getConfig();
+if (cfg && cfg.apiKey) initFirestore(cfg);
+
+window.connectFirebase = () => {
+  const config = {
+    apiKey:     document.getElementById('cfg-apiKey').value.trim(),
+    authDomain: document.getElementById('cfg-authDomain').value.trim(),
+    projectId:  document.getElementById('cfg-projectId').value.trim(),
+    appId:      document.getElementById('cfg-appId').value.trim(),
+  };
+  if (!config.apiKey || !config.projectId) { alert('Please fill in at least the API Key and Project ID.'); return; }
+  localStorage.setItem('joss-fb', JSON.stringify(config));
+  initFirestore(config);
+  toast('🔥 Connected to Firebase!');
+};
+
+// ── RENDER ──
+const fmt    = n => 'BDT ' + Number(n).toLocaleString('en-BD');
+const margin = (b, a) => Math.round(((a - b) / a) * 100);
+
+function render() {
+  const q   = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+
+  let list = products.filter(p =>
+    (!q || (p.name||'').toLowerCase().includes(q) || (p.cat||'').toLowerCase().includes(q)) &&
+    (!cat || p.cat === cat)
+  );
+
+  list.sort((a, b) => {
+    if (sortKey === 'name')   return sortDir * (a.name||'').localeCompare(b.name||'');
+    if (sortKey === 'cat')    return sortDir * (a.cat||'').localeCompare(b.cat||'');
+    if (sortKey === 'buying') return sortDir * (a.buying - b.buying);
+    if (sortKey === 'asking') return sortDir * (a.asking - b.asking);
+    if (sortKey === 'margin') return sortDir * (margin(a.buying,a.asking) - margin(b.buying,b.asking));
+    return 0;
+  });
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="no-results"><div class="icon">${products.length?'🔍':'📦'}</div>${products.length?'No products match your search.':'No products yet. Add your first product as admin!'}</div></td></tr>`;
+  } else {
+    list.forEach((p, i) => {
+      const m  = margin(p.buying, p.asking);
+      const mc = m>=40?'margin-high':m>=25?'margin-mid':'margin-low';
+      const tr = document.createElement('tr');
+      tr.style.animationDelay = `${i*25}ms`;
+      const safeId = (p.fid||'').replace(/'/g, "\\'");
+      const safeName = (p.name||'').replace(/'/g, "\\'");
+      tr.innerHTML = `
+        <td><div class="product-cell">
+          <div class="product-emoji">${p.emoji||'🎁'}</div>
+          <div><div class="product-name">${p.name||''}</div><div class="product-id">#${(p.fid||'').slice(-6).toUpperCase()}</div></div>
+        </div></td>
+        <td><span class="cat-badge">${p.cat||''}</span></td>
+        <td class="price buying">${fmt(p.buying)}</td>
+        <td class="price asking">${fmt(p.asking)}</td>
+        <td><span class="margin-badge ${mc}">+${m}%</span></td>
+        <td><div class="actions admin-only">
+          <button class="btn-edit" title="Edit"   onclick="window.__edit('${safeId}')">✎</button>
+          <button class="btn-del"  title="Delete" onclick="window.__del('${safeId}','${safeName}')">✕</button>
+        </div></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  const cats = [...new Set(products.map(p => p.cat))];
+  document.getElementById('statTotal').textContent  = products.length;
+  document.getElementById('statCats').textContent   = cats.length;
+  const avg = products.length ? Math.round(products.reduce((s,p)=>s+margin(p.buying,p.asking),0)/products.length) : 0;
+  document.getElementById('statMargin').textContent = avg + '%';
+  document.getElementById('countBar').textContent   = list.length === products.length
+    ? `Showing all ${products.length} products` : `Showing ${list.length} of ${products.length} products`;
+
+  const sel = document.getElementById('catFilter'), cur = sel.value;
+  sel.innerHTML = '<option value="">All Categories</option>' + cats.sort().map(c=>`<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+  document.getElementById('cat-list').innerHTML = cats.map(c=>`<option value="${c}">`).join('');
+  ['name','cat','buying','asking','margin'].forEach(k => {
+    const el = document.getElementById('th-'+k); if(el) el.className = k===sortKey?'sorted':'';
+  });
+}
+
+window.setSort = key => { sortDir = sortKey===key?-sortDir:1; sortKey=key; document.getElementById('sortSel').value=key; render(); };
+
+// ── CRUD ──
+window.__del = async (fid, name) => {
+  if (!confirm(`Remove "${name}"?`)) return;
+  try { await deleteDoc(doc(db,'products',fid)); toast('🗑️ Deleted'); } catch(e){ alert(e.message); }
+};
+
+window.__edit = fid => {
+  const p = products.find(x=>x.fid===fid); if(!p) return;
+  editingId = fid;
+  document.getElementById('e-name').value   = p.name;
+  document.getElementById('e-cat').value    = p.cat;
+  document.getElementById('e-buying').value = p.buying;
+  document.getElementById('e-asking').value = p.asking;
+  document.getElementById('e-emoji').value  = p.emoji||'';
+  document.getElementById('edit-overlay').classList.add('open');
+};
+
+window.openModal      = () => document.getElementById('overlay').classList.add('open');
+window.closeModal     = () => document.getElementById('overlay').classList.remove('open');
+window.closeEditModal = () => { editingId=null; document.getElementById('edit-overlay').classList.remove('open'); };
+
+window.saveProduct = async () => {
+  const name=document.getElementById('f-name').value.trim(), cat=document.getElementById('f-cat').value.trim(),
+    buying=parseFloat(document.getElementById('f-buying').value), asking=parseFloat(document.getElementById('f-asking').value),
+    emoji=document.getElementById('f-emoji').value.trim()||'🎁';
+  if (!name||!cat||isNaN(buying)||isNaN(asking)||buying<=0||asking<=buying)
+    { alert('Fill all fields.\n• Asking price must be higher than buying price.'); return; }
+  if (!db) { alert('Firebase not connected!'); return; }
+  const btn=document.getElementById('btn-add-save'); btn.disabled=true; btn.textContent='Saving…';
+  try {
+    await addDoc(collection(db,'products'),{name,cat,emoji,buying,asking,createdAt:Date.now()});
+    ['f-name','f-cat','f-buying','f-asking','f-emoji'].forEach(id=>document.getElementById(id).value='');
+    window.closeModal(); toast('✅ Product added!');
+  } catch(e){ alert(e.message); } finally { btn.disabled=false; btn.textContent='Save Product'; }
+};
+
+window.updateProduct = async () => {
+  const name=document.getElementById('e-name').value.trim(), cat=document.getElementById('e-cat').value.trim(),
+    buying=parseFloat(document.getElementById('e-buying').value), asking=parseFloat(document.getElementById('e-asking').value),
+    emoji=document.getElementById('e-emoji').value.trim()||'🎁';
+  if (!name||!cat||isNaN(buying)||isNaN(asking)||buying<=0||asking<=buying)
+    { alert('Fill all fields.\n• Asking price must be higher than buying price.'); return; }
+  const btn=document.getElementById('btn-edit-save'); btn.disabled=true; btn.textContent='Saving…';
+  try {
+    await updateDoc(doc(db,'products',editingId),{name,cat,emoji,buying,asking});
+    window.closeEditModal(); toast('✅ Updated!');
+  } catch(e){ alert(e.message); } finally { btn.disabled=false; btn.textContent='Update Product'; }
+};
+
+// ── ADMIN ──
+window.toggleAdmin = () => {
+  if (isAdmin) {
+    isAdmin=false; document.body.classList.remove('admin-mode');
+    document.getElementById('adminBar').classList.remove('show');
+    document.getElementById('lockBtn').classList.remove('active');
+    document.getElementById('lockLabel').textContent='Admin';
+  } else {
+    document.getElementById('pw-overlay').classList.add('open');
+    document.getElementById('pw-input').value=''; document.getElementById('pw-err').textContent='';
+    setTimeout(()=>document.getElementById('pw-input').focus(),100);
+  }
+};
+
+window.checkPassword = () => {
+  const val=document.getElementById('pw-input').value;
+  if (val===ADMIN_PASSWORD) {
+    isAdmin=true; document.body.classList.add('admin-mode');
+    document.getElementById('adminBar').classList.add('show');
+    document.getElementById('lockBtn').classList.add('active');
+    document.getElementById('lockLabel').textContent='Logout';
+    window.closePwModal(); toast('🛡️ Admin mode unlocked');
+  } else {
+    const inp=document.getElementById('pw-input');
+    inp.classList.add('shake'); document.getElementById('pw-err').textContent='Wrong password.';
+    inp.value=''; setTimeout(()=>{inp.classList.remove('shake');inp.focus();},400);
+  }
+};
+
+window.closePwModal = () => document.getElementById('pw-overlay').classList.remove('open');
+
+// ── EVENTS ──
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('catFilter').addEventListener('change', render);
+document.getElementById('sortSel').addEventListener('change', e=>{sortKey=e.target.value;render();});
+['overlay','edit-overlay','pw-overlay'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', e=>{
+    if(e.target.id===id){
+      if(id==='overlay') window.closeModal();
+      else if(id==='edit-overlay') window.closeEditModal();
+      else window.closePwModal();
+    }
+  });
+});
+</script>
+</body>
+</html>
